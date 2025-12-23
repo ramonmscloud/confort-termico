@@ -48,7 +48,12 @@ async function login() {
     const email = prompt("Ingresa tu email para recibir un enlace mágico de acceso:");
     if (!email) return;
 
-    const { error } = await supabaseClient.auth.signInWithOtp({ email });
+    const { error } = await supabaseClient.auth.signInWithOtp({ 
+        email,
+        options: {
+            emailRedirectTo: window.location.origin // Redirige a la URL actual (localhost o Netlify)
+        }
+    });
     if (error) alert('Error: ' + error.message);
     else alert('¡Enlace enviado! Revisa tu correo electrónico.');
 }
