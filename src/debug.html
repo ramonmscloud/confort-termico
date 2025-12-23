@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnóstico Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-8 bg-gray-100">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+        <h1 class="text-2xl font-bold mb-4">Diagnóstico de Conexión</h1>
+        <div id="logs" class="space-y-2 font-mono text-sm"></div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        const log = (msg, type = 'info') => {
+            const div = document.getElementById('logs');
+            const p = document.createElement('p');
+            p.className = type === 'error' ? 'text-red-600' : (type === 'success' ? 'text-green-600' : 'text-gray-700');
+            p.textContent = `> ${msg}`;
+            div.appendChild(p);
+        };
+
+        async function runDiagnostics() {
+            log('Iniciando diagnóstico...');
+            
+            // 1. Verificar configuración
+            if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+                log('Faltan credenciales en app.js', 'error');
+                return;
+            }
+            log('Credenciales detectadas.');
+
+            // 2. Probar conexión simple (leer aulas)
+            log('Intentando leer tabla "aulas"...');
+            try {
+                // Usamos supabaseClient definido en app.js
+                const { data: aulas, error } = await supabaseClient.from('aulas').select('*');
+                
+                if (error) {
+                    log(`Error leyendo aulas: ${error.message} (${error.code})`, 'error');
+                    if (error.code === 'PGRST301') log('Posible error de RLS (Permisos).', 'error');
+                    if (error.message.includes('Failed to fetch')) log('Error de red. ¿Bloqueo de CORS o URL incorrecta?', 'error');
+                } else {
+                    log(`Éxito. Se encontraron ${aulas.length} aulas.`, 'success');
+                    if (aulas.length > 0) {
+                        log(`Aula ID 1 existe: ${aulas.some(a => a.id === 1)}`);
+                    } else {
+                        log('La tabla aulas está vacía. El insert de feedback fallará por Foreign Key.', 'error');
+                    }
+                }
+            } catch (e) {
+                log(`Excepción crítica: ${e.message}`, 'error');
+            }
+        }
+
+        runDiagnostics();
+    </script>
+</body>
+</html>

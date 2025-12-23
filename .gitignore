@@ -1,0 +1,14 @@
+# Sistema Operativo
+.DS_Store
+Thumbs.db
+
+# Entorno y Configuración Local
+.env
+.env.local
+
+# Dependencias (si se añaden en el futuro)
+node_modules/
+npm-debug.log
+
+# Archivos temporales
+*.log
