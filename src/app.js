@@ -44,43 +44,46 @@ function handleUserLogout() {
     document.getElementById('user-info').classList.add('hidden');
 }
 
-async function login() {
-    const email = prompt("Ingresa tu email para recibir un enlace mágico de acceso:");
-    if (!email) return;
+function login() {
+    document.getElementById('auth-modal').classList.remove('hidden');
+}
 
-    // Feedback visual inmediato
-    const loginBtn = document.getElementById('login-btn');
-    const originalText = loginBtn.innerText;
-    loginBtn.innerText = "Enviando...";
-    loginBtn.disabled = true;
+function closeAuthModal() {
+    document.getElementById('auth-modal').classList.add('hidden');
+}
 
-    try {
-        const { error } = await supabaseClient.auth.signInWithOtp({ 
+async function handleAuth(type) {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+
+    if (!email || !password) {
+        alert("Por favor, introduce email y contraseña");
+        return;
+    }
+
+    let error = null;
+    
+    if (type === 'signup') {
+        const { error: signUpError } = await supabaseClient.auth.signUp({
             email,
-            options: {
-                emailRedirectTo: window.location.origin 
-            }
+            password
         });
-
-        if (error) {
-            console.error('Error detallado de login:', error);
-            
-            // Mensajes de error más amigables
-            if (error.message.includes("rate limit") || error.status === 429) {
-                alert("⚠️ LÍMITE EXCEDIDO: Has superado el límite de correos de prueba de Supabase (3 por hora). Espera unos 15-60 minutos.");
-            } else if (error.message.includes("Signups not allowed")) {
-                alert("⚠️ REGISTRO CERRADO: Debes habilitar 'Enable Signups' en Supabase > Authentication > Settings.");
-            } else {
-                alert(`Error al enviar correo: ${error.message}\n\nVerifica que la URL '${window.location.origin}' esté en 'Redirect URLs' en Supabase.`);
-            }
-        } else {
-            alert('✅ ¡Enlace enviado! Revisa tu correo (incluyendo SPAM). Haz clic en el enlace para entrar.');
+        error = signUpError;
+        if (!error) {
+            alert("¡Registro exitoso! Si no entras automáticamente, pulsa 'Entrar'.");
         }
-    } catch (err) {
-        alert("Error inesperado: " + err.message);
-    } finally {
-        loginBtn.innerText = originalText;
-        loginBtn.disabled = false;
+    } else {
+        const { error: signInError } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+        });
+        error = signInError;
+    }
+
+    if (error) {
+        alert("Error: " + error.message);
+    } else {
+        closeAuthModal();
     }
 }
 
