@@ -24,6 +24,16 @@
 
     <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
         <h1 class="text-2xl font-bold mb-2 text-gray-800">¿Cómo te sientes?</h1>
+        
+        <!-- Aula Status -->
+        <div class="mb-4 p-2 bg-gray-50 rounded border border-gray-200 flex justify-between items-center">
+            <div class="text-left">
+                <p class="text-xs text-gray-500 uppercase">Ubicación Actual</p>
+                <p id="current-aula-display" class="font-bold text-gray-800">Sin Aula Asignada</p>
+            </div>
+            <button onclick="openAulaModal()" class="text-blue-600 text-sm hover:underline">Cambiar</button>
+        </div>
+
         <p class="text-gray-600 mb-6">Ayúdanos a mejorar el confort del aula.</p>
 
         <div id="voting-interface" class="grid grid-cols-5 gap-2 mb-6">
@@ -50,6 +60,25 @@
         </div>
 
         <div id="status-message" class="hidden p-4 mb-4 text-sm rounded-lg" role="alert"></div>
+    </div>
+
+    <!-- Modal de Selección de Aula -->
+    <div id="aula-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">📍 Confirmar Ubicación</h2>
+            <p class="text-sm text-gray-600 mb-4">Para votar, debes indicar en qué aula te encuentras. Esta validación dura 90 minutos.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID del Aula</label>
+                    <input type="number" id="aula-input" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: 1">
+                    <p class="text-xs text-gray-400 mt-1">Escanea el QR del aula o introduce el número manualmente.</p>
+                </div>
+                
+                <button onclick="setManualAula()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Confirmar Aula</button>
+                <button onclick="closeAulaModal()" class="w-full text-gray-500 text-sm hover:text-gray-700 mt-2">Cancelar</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal de Login/Registro -->

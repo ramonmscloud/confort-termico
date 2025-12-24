@@ -5,17 +5,28 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Estado
-let currentAulaId = 1;
+let currentAulaId = null;
 let currentUser = null;
+const AULA_TIMEOUT = 90 * 60 * 1000; // 90 minutos en milisegundos
 
 // Inicialización
 window.addEventListener('load', async () => {
-    // Detectar aula
+    // 1. Gestión de Aula (QR o LocalStorage)
     const urlParams = new URLSearchParams(window.location.search);
     const aulaParam = urlParams.get('aula');
-    if (aulaParam) currentAulaId = parseInt(aulaParam);
 
-    // Verificar sesión
+    if (aulaParam) {
+        // Si viene por URL (QR), actualizamos inmediatamente
+        setAula(aulaParam);
+        // Limpiamos la URL para que no se quede el parámetro
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        // Si no, verificamos si hay una sesión válida guardada
+        checkAulaSession();
+    }
+    updateAulaDisplay();
+
+    // 2. Verificar sesión de usuario
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         handleUserLogin(session.user);
@@ -24,8 +35,6 @@ window.addEventListener('load', async () => {
     // Escuchar cambios de auth
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (event === 'PASSWORD_RECOVERY') {
-            // El usuario ha hecho clic en el enlace de recuperación
-            // Mostramos el modal de cambio de contraseña inmediatamente
             openChangePasswordModal();
             alert("Por favor, establece tu nueva contraseña ahora.");
         }
@@ -34,6 +43,77 @@ window.addEventListener('load', async () => {
         else handleUserLogout();
     });
 });
+
+// --- GESTIÓN DE AULA ---
+
+function setAula(id) {
+    if (!id) return;
+    const aulaId = parseInt(id);
+    const now = Date.now();
+    
+    localStorage.setItem('confort_aula_id', aulaId);
+    localStorage.setItem('confort_aula_ts', now);
+    
+    currentAulaId = aulaId;
+    updateAulaDisplay();
+    closeAulaModal();
+    
+    // Feedback visual
+    alert(`✅ Ubicación actualizada: Aula ${aulaId}\nValidez: 90 minutos.`);
+}
+
+function checkAulaSession() {
+    const storedAula = localStorage.getItem('confort_aula_id');
+    const storedTime = localStorage.getItem('confort_aula_ts');
+    
+    if (storedAula && storedTime) {
+        const elapsed = Date.now() - parseInt(storedTime);
+        if (elapsed < AULA_TIMEOUT) {
+            currentAulaId = parseInt(storedAula);
+            return true;
+        } else {
+            // Expirado
+            localStorage.removeItem('confort_aula_id');
+            localStorage.removeItem('confort_aula_ts');
+            currentAulaId = null;
+            return false;
+        }
+    }
+    currentAulaId = null;
+    return false;
+}
+
+function updateAulaDisplay() {
+    const display = document.getElementById('current-aula-display');
+    if (currentAulaId) {
+        display.textContent = `Aula ${currentAulaId}`;
+        display.className = "font-bold text-green-600";
+    } else {
+        display.textContent = "Sin Aula Asignada";
+        display.className = "font-bold text-red-500";
+    }
+}
+
+function openAulaModal() {
+    document.getElementById('aula-modal').classList.remove('hidden');
+}
+
+function closeAulaModal() {
+    document.getElementById('aula-modal').classList.add('hidden');
+}
+
+function setManualAula() {
+    const input = document.getElementById('aula-input');
+    if (input.value) {
+        setAula(input.value);
+    } else {
+        alert("Por favor, introduce un número de aula.");
+    }
+}
+
+// --- FIN GESTIÓN DE AULA ---
+
+// Gestión de Usuarios
 
 // Gestión de Usuarios
 async function handleUserLogin(user) {
@@ -207,6 +287,13 @@ async function fetchPoints() {
 
 // Función para votar
 async function votar(valor) {
+    // 1. Validar Aula antes de nada
+    if (!checkAulaSession()) {
+        openAulaModal();
+        alert("⚠️ Debes confirmar tu ubicación antes de votar.\n\nEscanea el código QR del aula o introduce el número manualmente.");
+        return;
+    }
+
     const statusDiv = document.getElementById('status-message');
     statusDiv.className = 'p-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50';
     statusDiv.innerHTML = 'Enviando tu voto...';
