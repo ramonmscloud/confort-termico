@@ -139,10 +139,39 @@ function updateDashboard(data) {
     distributionChart.data.datasets[0].data = counts;
     distributionChart.update();
 
-    // 3. Actualizar Gráfico Temporal (Invertir array para cronológico)
-    const timelineData = [...data].reverse().slice(-20); // Últimos 20
+    // 3. Actualizar Gráfico Temporal (Por Aula)
+    const timelineData = [...data].reverse(); // Usar todos los datos cargados (100) para tener mejor histórico
+    
+    // Agrupar por Aula
+    const aulas = {};
+    timelineData.forEach(d => {
+        if (!aulas[d.aula_id]) aulas[d.aula_id] = [];
+        aulas[d.aula_id].push(d);
+    });
+
+    // Generar datasets
+    const datasets = Object.keys(aulas).map(aulaId => {
+        const aulaData = aulas[aulaId];
+        const color = getColorForAula(aulaId);
+        
+        return {
+            label: `Aula ${aulaId}`,
+            data: aulaData.map(d => ({
+                x: new Date(d.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                y: d.voto
+            })),
+            borderColor: color,
+            backgroundColor: color,
+            tension: 0.3,
+            pointRadius: 4,
+            fill: false
+        };
+    });
+
+    // Usamos un set de todas las etiquetas de tiempo para el eje X (opcional, Chart.js lo maneja bien si pasamos objetos x/y pero en line chart espera labels comunes a veces)
+    // Para simplificar en este gráfico básico, usaremos las etiquetas de TODOS los puntos ordenados
     timelineChart.data.labels = timelineData.map(d => new Date(d.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-    timelineChart.data.datasets[0].data = timelineData.map(d => d.voto);
+    timelineChart.data.datasets = datasets;
     timelineChart.update();
 
     // 4. Actualizar Tabla
@@ -227,4 +256,21 @@ function getLabelForValue(val) {
     if (val === 1) return 'Calor';
     if (val === 2) return 'Muy Calor';
     return val;
+}
+
+function getColorForAula(id) {
+    // Generar un color consistente basado en el ID del aula
+    const colors = [
+        '#2563eb', // Blue 600
+        '#dc2626', // Red 600
+        '#16a34a', // Green 600
+        '#d97706', // Amber 600
+        '#9333ea', // Purple 600
+        '#0891b2', // Cyan 600
+        '#be123c', // Rose 700
+        '#4d7c0f', // Lime 700
+        '#4338ca', // Indigo 700
+        '#b45309'  // Amber 700
+    ];
+    return colors[id % colors.length];
 }
