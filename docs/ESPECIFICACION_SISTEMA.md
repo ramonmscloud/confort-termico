@@ -1,3 +1,22 @@
+---
+marp: true
+theme: default
+paginate: true
+size: A4
+style: |
+    section {
+        font-size: 12pt;
+        text-align: left;
+        padding: 2cm;
+        background-color: white;
+    }
+    h1 { color: #2c3e50; }
+    h2 { color: #34495e; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    h3 { color: #7f8c8d; }
+    table { font-size: 10pt; width: 100%; }
+    th { background-color: #f8f9fa; }
+---
+
 # Especificación del Sistema de Monitoreo de Confort Térmico
 
 **Versión:** 1.0  
@@ -17,6 +36,8 @@ El sistema abarca:
 *   **Backend as a Service (BaaS):** Gestión de base de datos, autenticación y tiempo real mediante Supabase.
 *   **Panel de Administración:** Dashboard para visualización de datos, gráficas y rankings.
 *   **Sistema de Gamificación:** Mecanismo de recompensas (puntos) para incentivar la participación.
+
+---
 
 ### 1.3. Definiciones y Acrónimos
 *   **Supabase:** Plataforma de backend de código abierto (alternativa a Firebase).
@@ -40,6 +61,8 @@ El sistema abarca:
 *   **Infraestructura:**
     *   **Hosting:** Netlify (Archivos estáticos).
     *   **Servidor de Correo:** Gmail SMTP (vía Google App Passwords).
+
+---
 
 ### 2.2. Flujo de Datos
 1.  El usuario escanea un QR o entra manualmente.
@@ -65,6 +88,8 @@ El sistema abarca:
 *   Aparece en el Ranking de usuarios.
 *   Puede recuperar su contraseña vía email.
 
+---
+
 ### 3.3. Administrador
 *   Acceso exclusivo al Dashboard (`admin.html`).
 *   Protegido por contraseña de aplicación (Client-side).
@@ -79,12 +104,16 @@ El sistema abarca:
 *   **Recuperación de Contraseña:** Implementado mediante flujo SMTP usando Gmail. El usuario recibe un enlace, hace clic y define una nueva clave.
 *   **Gestión de Perfil:** Los usuarios logueados pueden cambiar su contraseña desde la interfaz principal.
 
+---
+
 ### 4.2. Gestión de Espacios (Aulas)
 *   **Selección de Aula:**
     *   **Automática:** Vía parámetro URL `?aula=ID` (QR).
     *   **Manual:** El usuario introduce el ID numérico.
 *   **Validación Temporal:** La asignación de aula se guarda en `localStorage` con un **Timeout de 90 minutos**. Pasado este tiempo, el sistema obliga al usuario a reconfirmar su ubicación antes de votar.
 *   **Validación de Existencia:** El sistema verifica que el ID del aula exista en la base de datos antes de permitir el voto.
+
+---
 
 ### 4.3. Sistema de Votación (Feedback)
 *   **Escala de Voto:** Escala de 5 puntos según norma ISO 7730 (adaptada):
@@ -99,6 +128,8 @@ El sistema abarca:
 *   **Puntos:** Cada voto registrado por un usuario autenticado suma **10 puntos**.
 *   **Automatización:** La suma se realiza mediante un *Trigger* (`sumar_puntos_feedback`) en la base de datos, garantizando integridad y seguridad.
 *   **Ranking:** Visualización de los usuarios con más puntos en el panel de administración.
+
+---
 
 ### 4.5. Panel de Administración (Dashboard)
 *   **Acceso:** Ruta `/admin.html`, protegida por pantalla de bloqueo con contraseña.
@@ -116,6 +147,8 @@ El sistema abarca:
 ### 5.1. Diagrama Entidad-Relación
 
 ![Diagrama ER](https://mermaid.ink/img/Z3JhcGggVEQKICAgICUlIE5vZG9zIChUYWJsYXMpCiAgICBVU0VSUygoIkF1dGggVXNlcnM8YnIvPihTaXN0ZW1hKSIpKQogICAgUEVSRklMRVNbIlBFUkZJTEVTPGJyLz4oR2FtaWZpY2FjacOzbikiXQogICAgQVVMQVNbIkFVTEFTPGJyLz4oRXNwYWNpb3MpIl0KICAgIEZFRURCQUNLWyJGRUVEQkFDSzxici8+KFZvdG9zKSJdCiAgICBNRURJQ0lPTkVTWyJNRURJQ0lPTkVTPGJyLz4oU2Vuc29yZXMpIl0KCiAgICAlJSBFc3RpbG9zCiAgICBjbGFzc0RlZiBtYXN0ZXIgZmlsbDojZTFmNWZlLHN0cm9rZTojMDI3N2JkLHN0cm9rZS13aWR0aDoycHgsY29sb3I6YmxhY2s7CiAgICBjbGFzc0RlZiB0cmFucyBmaWxsOiNmZmYzZTAsc3Ryb2tlOiNlZjZjMDAsc3Ryb2tlLXdpZHRoOjJweCxjb2xvcjpibGFjazsKICAgIGNsYXNzRGVmIHN5c3RlbSBmaWxsOiNlZWVlZWUsc3Ryb2tlOiM5ZTllOWUsc3Ryb2tlLXdpZHRoOjJweCxzdHJva2UtZGFzaGFycmF5OiA1IDUsY29sb3I6YmxhY2s7CgogICAgY2xhc3MgQVVMQVMsUEVSRklMRVMgbWFzdGVyOwogICAgY2xhc3MgRkVFREJBQ0ssTUVESUNJT05FUyB0cmFuczsKICAgIGNsYXNzIFVTRVJTIHN5c3RlbTsKCiAgICAlJSBSZWxhY2lvbmVzCiAgICBVU0VSUyAtLT58MToxIC0gRXh0aWVuZGV8IFBFUkZJTEVTCiAgICBVU0VSUyAtLT58MTpOIC0gVm90YXwgRkVFREJBQ0sKICAgIEFVTEFTIC0tPnwxOk4gLSBSZWNpYmV8IEZFRURCQUNLCiAgICBBVUxBUyAtLT58MTpOIC0gVGllbmV8IE1FRElDSU9ORVM=)
+
+---
 
 ### 5.2. Tablas Principales
 
@@ -135,6 +168,8 @@ Información pública de los usuarios (vinculada a `auth.users`).
 | `email` | text | Correo electrónico del usuario. |
 | `puntos` | int | Puntos acumulados (Default: 0). |
 
+---
+
 #### `public.feedback`
 Registro histórico de votos.
 | Campo | Tipo | Descripción |
@@ -145,6 +180,8 @@ Registro histórico de votos.
 | `voto` | int | Valor del voto (-2 a +2). |
 | `session_id` | text | ID de sesión para anónimos. |
 | `created_at` | timestamp | Fecha y hora del voto. |
+
+---
 
 ### 5.3. Lógica de Negocio (Base de Datos)
 *   **Trigger `on_auth_user_created`:** Crea automáticamente una entrada en `public.perfiles` cuando un usuario se registra.
@@ -163,6 +200,8 @@ Registro histórico de votos.
 *   **Botonera de Voto:** 5 botones grandes con emojis representativos y colores semánticos (Azul a Rojo).
 *   **Modales:** Ventanas emergentes para Login/Registro, Selección de Aula, Recuperación de Contraseña y Cambio de Contraseña.
 
+---
+
 ### 6.2. Pantalla Admin (`admin.html`)
 *   **Bloqueo:** Pantalla inicial solicitando contraseña.
 *   **Dashboard:** Diseño en rejilla (Grid) responsive.
@@ -179,6 +218,8 @@ Para evitar límites de envío, se utiliza un servidor SMTP personalizado:
 *   **Host:** `smtp.gmail.com`
 *   **Port:** `587` (SSL OFF / STARTTLS).
 *   **Auth:** Usuario de Gmail y Contraseña de Aplicación (App Password).
+
+---
 
 ### 7.2. Scripts de Mantenimiento
 El sistema cuenta con scripts SQL predefinidos para gestión:
