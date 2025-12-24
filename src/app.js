@@ -334,6 +334,12 @@ async function votar(valor) {
     } catch (err) {
         console.error('Error al votar:', err);
         statusDiv.className = 'p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50';
-        statusDiv.innerHTML = `Error: ${err.message || JSON.stringify(err)}`;
+        
+        // Mensaje de error más amigable para el usuario
+        if (err.message && err.message.includes("feedback_aula_id_fkey")) {
+            statusDiv.innerHTML = `⚠️ Error: El Aula ${currentAulaId} no está registrada en el sistema. Por favor, avisa al administrador.`;
+        } else {
+            statusDiv.innerHTML = `Error: ${err.message || JSON.stringify(err)}`;
+        }
     }
 }
