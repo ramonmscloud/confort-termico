@@ -37,8 +37,6 @@ El sistema abarca:
 *   **Panel de Administración:** Dashboard para visualización de datos, gráficas y rankings.
 *   **Sistema de Gamificación:** Mecanismo de recompensas (puntos) para incentivar la participación.
 
----
-
 ### 1.3. Definiciones y Acrónimos
 *   **Supabase:** Plataforma de backend de código abierto (alternativa a Firebase).
 *   **RLS (Row Level Security):** Políticas de seguridad a nivel de fila en PostgreSQL.
@@ -46,8 +44,6 @@ El sistema abarca:
 *   **SMTP:** Protocolo para el envío de correos electrónicos (configurado vía Gmail).
 
 ---
-
-## 2. Arquitectura del Sistema
 
 ### 2.1. Stack Tecnológico
 *   **Frontend:**
@@ -64,8 +60,6 @@ El sistema abarca:
 
 ---
 
-### 2.2. Flujo de Datos
-1.  El usuario escanea un QR o entra manualmente.
 2.  La aplicación valida la ubicación (Aula) y la sesión.
 3.  El voto se envía a Supabase (`public.feedback`).
 4.  Un *Trigger* de base de datos actualiza automáticamente los puntos del usuario (`public.perfiles`).
@@ -75,8 +69,6 @@ El sistema abarca:
 
 ## 3. Actores y Roles
 
-### 3.1. Usuario Anónimo
-*   Puede acceder a la aplicación.
 *   Puede seleccionar un aula.
 *   Puede emitir votos de confort.
 *   **Limitación:** No acumula puntos y no tiene historial persistente entre dispositivos.
@@ -92,8 +84,6 @@ El sistema abarca:
 
 ### 3.3. Administrador
 *   Acceso exclusivo al Dashboard (`admin.html`).
-*   Protegido por contraseña de aplicación (Client-side).
-*   Visualización global de datos, tendencias por aula y leaderboard.
 
 ---
 
@@ -104,16 +94,12 @@ El sistema abarca:
 *   **Recuperación de Contraseña:** Implementado mediante flujo SMTP usando Gmail. El usuario recibe un enlace, hace clic y define una nueva clave.
 *   **Gestión de Perfil:** Los usuarios logueados pueden cambiar su contraseña desde la interfaz principal.
 
----
-
 ### 4.2. Gestión de Espacios (Aulas)
 *   **Selección de Aula:**
     *   **Automática:** Vía parámetro URL `?aula=ID` (QR).
     *   **Manual:** El usuario introduce el ID numérico.
 *   **Validación Temporal:** La asignación de aula se guarda en `localStorage` con un **Timeout de 90 minutos**. Pasado este tiempo, el sistema obliga al usuario a reconfirmar su ubicación antes de votar.
-*   **Validación de Existencia:** El sistema verifica que el ID del aula exista en la base de datos antes de permitir el voto.
-
----
+*   **Validación de Existencia y Estado:** El sistema verifica que el ID del aula exista y esté marcado como **activo** (`is_active = true`) en la base de datos antes de permitir el voto.
 
 ### 4.3. Sistema de Votación (Feedback)
 *   **Escala de Voto:** Escala de 5 puntos según norma ISO 7730 (adaptada):
@@ -122,7 +108,9 @@ El sistema abarca:
     *   0: Bien (😊)
     *   +1: Calor (🔥)
     *   +2: Muy Calor (🥵)
-*   **Restricciones:** Un usuario no puede votar si no tiene un aula asignada y vigente.
+*   **Restricciones:**
+    *   Un usuario no puede votar si no tiene un aula asignada y vigente.
+    *   **Intervalo Mínimo:** Se establece un tiempo de espera obligatorio entre votos consecutivos de un mismo usuario (configurable entre 5 y 15 minutos).
 
 ### 4.4. Sistema de Gamificación
 *   **Puntos:** Cada voto registrado por un usuario autenticado suma **10 puntos**.
@@ -131,14 +119,20 @@ El sistema abarca:
 
 ---
 
-### 4.5. Panel de Administración (Dashboard)
-*   **Acceso:** Ruta `/admin.html`, protegida por pantalla de bloqueo con contraseña.
-*   **Visualización:**
-    *   **KPIs:** Total votos, Promedio confort.
-    *   **Distribución:** Gráfico de barras con la cantidad de votos por sensación.
-    *   **Evolución Temporal:** Gráfico de líneas **multiserie** (una línea por cada aula activa) mostrando la evolución del confort en el tiempo.
-    *   **Feed en Vivo:** Tabla con los últimos votos recibidos en tiempo real.
-    *   **Leaderboard:** Tabla de clasificación de usuarios por puntos.
+*   **Funcionalidades:**
+    *   **Configuración:**
+        *   Ajuste del intervalo mínimo entre votos (5-15 min).
+        *   Gestión de aulas (Activar/Desactivar).
+    *   **Exportación de Datos:**
+        *   Descarga de CSV de Votos (incluye Email de usuario).
+        *   Descarga de CSV de Puntos de usuarios.
+    *   **Visualización:**
+        *   **KPIs:** Total votos.
+        *   **Promedio por Aula:** Cuadrícula con el confort medio de cada espacio.
+        *   **Distribución:** Gráfico de barras con la cantidad de votos por sensación.
+        *   **Evolución Temporal:** Gráfico de líneas **multiserie**.
+        *   **Feed en Vivo:** Tabla con los últimos votos.
+        *   **Leaderboard:** Ranking de usuarios.
 
 ---
 
@@ -150,8 +144,6 @@ El sistema abarca:
 
 ---
 
-### 5.2. Tablas Principales
-
 #### `public.aulas`
 Catálogo de espacios disponibles.
 | Campo | Tipo | Descripción |
@@ -159,6 +151,14 @@ Catálogo de espacios disponibles.
 | `id` | bigint (PK) | Identificador único del aula (1-50). |
 | `nombre` | text | Nombre descriptivo (ej: "Aula 34"). |
 | `descripcion` | text | Detalles adicionales. |
+| `is_active` | boolean | Estado del aula (Activa/Inactiva). |
+
+#### `public.config`
+Configuración global del sistema.
+| Campo | Tipo | Descripción |
+| :--- | :--- | :--- |
+| `key` | text (PK) | Clave de configuración (ej: `min_vote_interval_minutes`). |
+| `value` | text | Valor de la configuración. |
 
 #### `public.perfiles`
 Información pública de los usuarios (vinculada a `auth.users`).
@@ -172,16 +172,12 @@ Información pública de los usuarios (vinculada a `auth.users`).
 
 #### `public.feedback`
 Registro histórico de votos.
-| Campo | Tipo | Descripción |
-| :--- | :--- | :--- |
 | `id` | bigint (PK) | Identificador único del voto. |
 | `aula_id` | bigint (FK) | Referencia a `public.aulas`. |
 | `user_id` | uuid (FK) | Referencia a `auth.users` (Nullable). |
 | `voto` | int | Valor del voto (-2 a +2). |
 | `session_id` | text | ID de sesión para anónimos. |
 | `created_at` | timestamp | Fecha y hora del voto. |
-
----
 
 ### 5.3. Lógica de Negocio (Base de Datos)
 *   **Trigger `on_auth_user_created`:** Crea automáticamente una entrada en `public.perfiles` cuando un usuario se registra.
@@ -200,8 +196,6 @@ Registro histórico de votos.
 *   **Botonera de Voto:** 5 botones grandes con emojis representativos y colores semánticos (Azul a Rojo).
 *   **Modales:** Ventanas emergentes para Login/Registro, Selección de Aula, Recuperación de Contraseña y Cambio de Contraseña.
 
----
-
 ### 6.2. Pantalla Admin (`admin.html`)
 *   **Bloqueo:** Pantalla inicial solicitando contraseña.
 *   **Dashboard:** Diseño en rejilla (Grid) responsive.
@@ -211,8 +205,6 @@ Registro histórico de votos.
 
 ---
 
-## 7. Configuración y Despliegue
-
 ### 7.1. Configuración SMTP (Gmail)
 Para evitar límites de envío, se utiliza un servidor SMTP personalizado:
 *   **Host:** `smtp.gmail.com`
@@ -221,8 +213,6 @@ Para evitar límites de envío, se utiliza un servidor SMTP personalizado:
 
 ---
 
-### 7.2. Scripts de Mantenimiento
-El sistema cuenta con scripts SQL predefinidos para gestión:
 *   `reset_full_database.sql`: Reinicio completo de fábrica.
 *   `add_aulas.sql`: Generación masiva de aulas (1-50).
 *   `allow_public_profiles.sql`: Configuración de permisos para el ranking.
@@ -237,8 +227,6 @@ El sistema cuenta con scripts SQL predefinidos para gestión:
 
 ## 8. Accesos y Credenciales
 
-### 8.1. Direcciones Públicas
-*   **Aplicación de Voto (Usuarios):** [https://control-termico.netlify.app](https://control-termico.netlify.app)
 *   **Panel de Administración (Dashboard):** [https://control-termico.netlify.app/admin.html](https://control-termico.netlify.app/admin.html)
 
 ### 8.2. Credenciales de Administración
