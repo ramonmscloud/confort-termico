@@ -11,9 +11,34 @@ let timelineChart;
 // Inicialización
 window.addEventListener('load', async () => {
     initCharts();
-    await loadInitialData();
-    subscribeToRealtime();
+    // Los datos se cargarán solo tras poner la contraseña
 });
+
+// Seguridad Admin
+function checkAdminPassword() {
+    const input = document.getElementById('admin-password-input');
+    const errorMsg = document.getElementById('admin-error-msg');
+    
+    // ⚠️ CONTRASEÑA DE ADMINISTRADOR ⚠️
+    // Puedes cambiarla aquí por la que tú quieras
+    const ADMIN_PASS = "admin1234";
+
+    if (input.value === ADMIN_PASS) {
+        // Contraseña correcta
+        document.getElementById('admin-login-modal').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+        
+        // Cargar datos ahora que estamos autorizados
+        loadInitialData();
+        subscribeToRealtime();
+    } else {
+        // Contraseña incorrecta
+        errorMsg.classList.remove('hidden');
+        input.classList.add('border-red-500');
+        input.value = '';
+        input.focus();
+    }
+}
 
 function initCharts() {
     // Gráfico de Distribución (Pie/Bar)
