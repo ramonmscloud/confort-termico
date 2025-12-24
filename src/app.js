@@ -48,14 +48,40 @@ async function login() {
     const email = prompt("Ingresa tu email para recibir un enlace mágico de acceso:");
     if (!email) return;
 
-    const { error } = await supabaseClient.auth.signInWithOtp({ 
-        email,
-        options: {
-            emailRedirectTo: window.location.origin // Redirige a la URL actual (localhost o Netlify)
+    // Feedback visual inmediato
+    const loginBtn = document.getElementById('login-btn');
+    const originalText = loginBtn.innerText;
+    loginBtn.innerText = "Enviando...";
+    loginBtn.disabled = true;
+
+    try {
+        const { error } = await supabaseClient.auth.signInWithOtp({ 
+            email,
+            options: {
+                emailRedirectTo: window.location.origin 
+            }
+        });
+
+        if (error) {
+            console.error('Error detallado de login:', error);
+            
+            // Mensajes de error más amigables
+            if (error.message.includes("rate limit") || error.status === 429) {
+                alert("⚠️ LÍMITE EXCEDIDO: Has superado el límite de correos de prueba de Supabase (3 por hora). Espera unos 15-60 minutos.");
+            } else if (error.message.includes("Signups not allowed")) {
+                alert("⚠️ REGISTRO CERRADO: Debes habilitar 'Enable Signups' en Supabase > Authentication > Settings.");
+            } else {
+                alert(`Error al enviar correo: ${error.message}\n\nVerifica que la URL '${window.location.origin}' esté en 'Redirect URLs' en Supabase.`);
+            }
+        } else {
+            alert('✅ ¡Enlace enviado! Revisa tu correo (incluyendo SPAM). Haz clic en el enlace para entrar.');
         }
-    });
-    if (error) alert('Error: ' + error.message);
-    else alert('¡Enlace enviado! Revisa tu correo electrónico.');
+    } catch (err) {
+        alert("Error inesperado: " + err.message);
+    } finally {
+        loginBtn.innerText = originalText;
+        loginBtn.disabled = false;
+    }
 }
 
 async function logout() {
