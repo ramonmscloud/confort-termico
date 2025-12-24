@@ -87,6 +87,41 @@ async function handleAuth(type) {
     }
 }
 
+// Gestión de Cambio de Contraseña
+function openChangePasswordModal() {
+    document.getElementById('change-password-modal').classList.remove('hidden');
+}
+
+function closeChangePasswordModal() {
+    document.getElementById('change-password-modal').classList.add('hidden');
+    document.getElementById('new-password').value = '';
+}
+
+async function handleChangePassword() {
+    const newPassword = document.getElementById('new-password').value;
+    
+    if (!newPassword) {
+        alert("Por favor, ingresa una nueva contraseña");
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        alert("La contraseña debe tener al menos 6 caracteres");
+        return;
+    }
+
+    const { error } = await supabaseClient.auth.updateUser({ 
+        password: newPassword 
+    });
+
+    if (error) {
+        alert("Error al actualizar contraseña: " + error.message);
+    } else {
+        alert("¡Contraseña actualizada correctamente!");
+        closeChangePasswordModal();
+    }
+}
+
 async function logout() {
     await supabaseClient.auth.signOut();
 }

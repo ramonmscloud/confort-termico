@@ -14,6 +14,7 @@
         <div id="user-info" class="hidden flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow text-sm">
             <span class="font-bold text-blue-600" id="user-points">0 pts</span>
             <span class="text-gray-600" id="user-email">usuario@email.com</span>
+            <button onclick="openChangePasswordModal()" class="text-blue-500 hover:text-blue-700 text-xs ml-2 underline">Cambiar Clave</button>
             <button onclick="logout()" class="text-red-500 hover:text-red-700 text-xs ml-2">(Salir)</button>
         </div>
         <button id="login-btn" onclick="login()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition text-sm">
@@ -75,6 +76,21 @@
                     <button onclick="handleAuth('signup')" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300 transition">Registrarse</button>
                 </div>
                 <button onclick="closeAuthModal()" class="w-full text-gray-500 text-sm hover:text-gray-700 mt-2">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cambio de Contraseña -->
+    <div id="change-password-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Cambiar Contraseña</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
+                    <input type="password" id="new-password" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="******">
+                </div>
+                <button onclick="handleChangePassword()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Actualizar Contraseña</button>
+                <button onclick="closeChangePasswordModal()" class="w-full text-gray-500 text-sm hover:text-gray-700 mt-2">Cancelar</button>
             </div>
         </div>
     </div>
