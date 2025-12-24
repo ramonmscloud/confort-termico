@@ -30,6 +30,7 @@ function checkAdminPassword() {
         
         // Cargar datos ahora que estamos autorizados
         loadInitialData();
+        loadLeaderboard();
         subscribeToRealtime();
     } else {
         // Contraseña incorrecta
@@ -160,14 +161,51 @@ function updateDashboard(data) {
     });
 }
 
+async function loadLeaderboard() {
+    const { data, error } = await supabaseClient
+        .from('perfiles')
+        .select('email, puntos')
+        .order('puntos', { ascending: false })
+        .limit(20);
+
+    if (error) {
+        console.error('Error cargando leaderboard:', error);
+        return;
+    }
+
+    const tbody = document.getElementById('leaderboard-body');
+    tbody.innerHTML = '';
+    data.forEach(user => {
+        // Mask email for privacy
+        const emailParts = user.email.split('@');
+        const maskedEmail = emailParts[0]; // Mostrar solo parte local
+        
+        const row = `
+            <tr class="bg-white border-b hover:bg-gray-50">
+                <td class="px-4 py-3 font-medium text-gray-900">${maskedEmail}</td>
+                <td class="px-4 py-3 text-right font-bold text-blue-600">${user.puntos} pts</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
 function subscribeToRealtime() {
+    // Canal de Feedback
     supabaseClient
         .channel('public:feedback')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feedback' }, payload => {
             console.log('Nuevo voto recibido!', payload);
-            // Recargar datos completos para simplificar actualización de gráficos
-            // En producción, optimizaríamos haciendo push al array local
             loadInitialData(); 
+        })
+        .subscribe();
+
+    // Canal de Perfiles (Puntos)
+    supabaseClient
+        .channel('public:perfiles')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'perfiles' }, payload => {
+            console.log('Puntos actualizados!', payload);
+            loadLeaderboard(); 
         })
         .subscribe();
 }
