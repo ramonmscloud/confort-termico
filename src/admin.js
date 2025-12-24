@@ -380,31 +380,49 @@ async function toggleAula(id, isActive) {
 
 async function downloadVotesCSV() {
     // Descargar TODOS los votos (sin límite de 100)
-    const { data, error } = await supabaseClient
+    const { data: votes, error: votesError } = await supabaseClient
         .from('feedback')
         .select('created_at, aula_id, voto, session_id, user_id')
         .order('created_at', { ascending: false });
 
-    if (error) {
-        alert('Error descargando datos: ' + error.message);
+    if (votesError) {
+        alert('Error descargando datos: ' + votesError.message);
         return;
     }
 
-    if (!data || data.length === 0) {
+    if (!votes || votes.length === 0) {
         alert('No hay datos para exportar.');
         return;
     }
 
+    // Obtener emails de usuarios
+    const userIds = [...new Set(votes.map(v => v.user_id).filter(id => id))];
+    let userMap = {};
+
+    if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabaseClient
+            .from('perfiles')
+            .select('id, email')
+            .in('id', userIds);
+        
+        if (!profilesError && profiles) {
+            profiles.forEach(p => {
+                userMap[p.id] = p.email;
+            });
+        }
+    }
+
     // Convertir a CSV
-    const headers = ['Timestamp', 'Aula ID', 'Voto', 'Session ID', 'User ID'];
+    const headers = ['Timestamp', 'Aula ID', 'Voto', 'Session ID', 'User ID', 'Email'];
     const csvContent = [
         headers.join(','),
-        ...data.map(row => [
+        ...votes.map(row => [
             new Date(row.created_at).toISOString(),
             row.aula_id,
             row.voto,
             row.session_id || '',
-            row.user_id || ''
+            row.user_id || '',
+            userMap[row.user_id] || '' // Email si existe
         ].join(','))
     ].join('\n');
 
