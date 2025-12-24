@@ -31,6 +31,8 @@ function checkAdminPassword() {
         // Cargar datos ahora que estamos autorizados
         loadInitialData();
         loadLeaderboard();
+        loadConfig();
+        loadAulasConfig();
         subscribeToRealtime();
     } else {
         // Contraseña incorrecta
@@ -273,4 +275,80 @@ function getColorForAula(id) {
         '#b45309'  // Amber 700
     ];
     return colors[id % colors.length];
+}
+
+// --- Configuración ---
+
+async function loadConfig() {
+    const { data, error } = await supabaseClient
+        .from('config')
+        .select('value')
+        .eq('key', 'min_vote_interval_minutes')
+        .single();
+
+    if (data) {
+        document.getElementById('config-interval').value = data.value;
+    }
+}
+
+async function saveConfig() {
+    const val = document.getElementById('config-interval').value;
+    if (val < 5 || val > 15) {
+        alert('El intervalo debe estar entre 5 y 15 minutos.');
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from('config')
+        .upsert({ key: 'min_vote_interval_minutes', value: val });
+
+    if (error) {
+        console.error('Error guardando config:', error);
+        alert('Error al guardar configuración.');
+    } else {
+        alert('Configuración guardada correctamente.');
+    }
+}
+
+async function loadAulasConfig() {
+    const { data, error } = await supabaseClient
+        .from('aulas')
+        .select('id, nombre, is_active')
+        .order('id');
+
+    if (error) {
+        console.error('Error cargando aulas:', error);
+        return;
+    }
+
+    const container = document.getElementById('aulas-config-list');
+    container.innerHTML = '';
+    
+    data.forEach(aula => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between bg-gray-50 p-2 rounded';
+        div.innerHTML = `
+            <span class="text-sm font-medium text-gray-700">${aula.nombre}</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer" 
+                    ${aula.is_active ? 'checked' : ''} 
+                    onchange="toggleAula(${aula.id}, this.checked)">
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+        `;
+        container.appendChild(div);
+    });
+}
+
+async function toggleAula(id, isActive) {
+    const { error } = await supabaseClient
+        .from('aulas')
+        .update({ is_active: isActive })
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error actualizando aula:', error);
+        alert('Error al actualizar estado del aula.');
+        loadAulasConfig(); // Revert UI
+    }
 }

@@ -338,6 +338,9 @@ async function votar(valor) {
         // Mensaje de error más amigable para el usuario
         if (err.message && err.message.includes("feedback_aula_id_fkey")) {
             statusDiv.innerHTML = `⚠️ Error: El Aula ${currentAulaId} no está registrada en el sistema. Por favor, avisa al administrador.`;
+        } else if (err.message && (err.message.includes("Debes esperar") || err.message.includes("no está habilitada"))) {
+             // Errores de lógica de negocio (Triggers)
+             statusDiv.innerHTML = `⚠️ ${err.message}`;
         } else {
             statusDiv.innerHTML = `Error: ${err.message || JSON.stringify(err)}`;
         }
