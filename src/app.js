@@ -142,20 +142,26 @@ function openForgotPasswordModal() {
 function closeForgotPasswordModal() {
     document.getElementById('forgot-password-modal').classList.add('hidden');
     document.getElementById('recovery-email').value = '';
+    document.getElementById('recovery-message').classList.add('hidden');
 }
 
-async function sendPasswordResetEmail() {
+async function sendPasswordResetEmail(btnElement) {
     const email = document.getElementById('recovery-email').value;
+    const msgDiv = document.getElementById('recovery-message');
     
+    // Reset mensaje
+    msgDiv.classList.add('hidden');
+    msgDiv.className = 'hidden text-sm p-2 rounded text-center';
+
     if (!email) {
-        alert("Por favor, ingresa tu email.");
+        msgDiv.textContent = "Por favor, ingresa tu email.";
+        msgDiv.className = "text-sm p-2 rounded text-center bg-red-100 text-red-700 block";
         return;
     }
 
-    const btn = event.target; // Referencia al botón para feedback visual
-    const originalText = btn.innerText;
-    btn.innerText = "Enviando...";
-    btn.disabled = true;
+    const originalText = btnElement.innerText;
+    btnElement.innerText = "Enviando...";
+    btnElement.disabled = true;
 
     try {
         const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
@@ -163,21 +169,25 @@ async function sendPasswordResetEmail() {
         });
 
         if (error) {
-            // Manejo específico de errores comunes
+            console.error("Error recuperación:", error);
+            msgDiv.className = "text-sm p-2 rounded text-center bg-red-100 text-red-700 block";
+            
             if (error.message.includes("rate limit")) {
-                alert("⚠️ Demasiados intentos. Por favor espera un rato antes de volver a intentarlo.");
+                msgDiv.textContent = "⚠️ Demasiados intentos. Espera un poco.";
             } else {
-                alert("Error: " + error.message);
+                msgDiv.textContent = "Error: " + error.message;
             }
         } else {
-            alert("✅ Correo enviado. Revisa tu bandeja de entrada (y spam) y haz clic en el enlace para restablecer tu contraseña.");
-            closeForgotPasswordModal();
+            msgDiv.className = "text-sm p-2 rounded text-center bg-green-100 text-green-700 block";
+            msgDiv.textContent = "✅ Correo enviado. Revisa tu bandeja de entrada (y spam).";
+            // No cerramos el modal inmediatamente para que lea el mensaje
         }
     } catch (err) {
-        alert("Error inesperado: " + err.message);
+        msgDiv.className = "text-sm p-2 rounded text-center bg-red-100 text-red-700 block";
+        msgDiv.textContent = "Error inesperado: " + err.message;
     } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
+        btnElement.innerText = originalText;
+        btnElement.disabled = false;
     }
 }
 
