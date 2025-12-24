@@ -22,7 +22,14 @@ window.addEventListener('load', async () => {
     }
 
     // Escuchar cambios de auth
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+            // El usuario ha hecho clic en el enlace de recuperación
+            // Mostramos el modal de cambio de contraseña inmediatamente
+            openChangePasswordModal();
+            alert("Por favor, establece tu nueva contraseña ahora.");
+        }
+        
         if (session) handleUserLogin(session.user);
         else handleUserLogout();
     });
@@ -124,6 +131,54 @@ async function handleChangePassword() {
 
 async function logout() {
     await supabaseClient.auth.signOut();
+}
+
+// Gestión de Recuperación de Contraseña
+function openForgotPasswordModal() {
+    closeAuthModal(); // Cerrar el de login si está abierto
+    document.getElementById('forgot-password-modal').classList.remove('hidden');
+}
+
+function closeForgotPasswordModal() {
+    document.getElementById('forgot-password-modal').classList.add('hidden');
+    document.getElementById('recovery-email').value = '';
+}
+
+async function sendPasswordResetEmail() {
+    const email = document.getElementById('recovery-email').value;
+    
+    if (!email) {
+        alert("Por favor, ingresa tu email.");
+        return;
+    }
+
+    const btn = event.target; // Referencia al botón para feedback visual
+    const originalText = btn.innerText;
+    btn.innerText = "Enviando...";
+    btn.disabled = true;
+
+    try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin // Redirige aquí para que detectemos el evento PASSWORD_RECOVERY
+        });
+
+        if (error) {
+            // Manejo específico de errores comunes
+            if (error.message.includes("rate limit")) {
+                alert("⚠️ Demasiados intentos. Por favor espera un rato antes de volver a intentarlo.");
+            } else {
+                alert("Error: " + error.message);
+            }
+        } else {
+            alert("✅ Correo enviado. Revisa tu bandeja de entrada (y spam) y haz clic en el enlace para restablecer tu contraseña.");
+            closeForgotPasswordModal();
+        }
+    } catch (err) {
+        alert("Error inesperado: " + err.message);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
 }
 
 async function fetchPoints() {
