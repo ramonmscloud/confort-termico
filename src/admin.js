@@ -123,13 +123,36 @@ async function loadInitialData() {
 function updateDashboard(data) {
     // 1. Actualizar Stats
     document.getElementById('total-votes').textContent = data.length;
-    
+    document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+
+    // Calcular y mostrar promedio por aula
+    const aulasAvgContainer = document.getElementById('aulas-avg-container');
+    aulasAvgContainer.innerHTML = '';
+
     if (data.length > 0) {
-        const sum = data.reduce((acc, curr) => acc + curr.voto, 0);
-        const avg = (sum / data.length).toFixed(2);
-        document.getElementById('avg-comfort').textContent = avg;
-        document.getElementById('avg-comfort').className = `text-3xl font-bold ${getColorForValue(avg)}`;
-        document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        // Agrupar por aula
+        const aulasGroups = {};
+        data.forEach(d => {
+            if (!aulasGroups[d.aula_id]) aulasGroups[d.aula_id] = [];
+            aulasGroups[d.aula_id].push(d.voto);
+        });
+
+        // Calcular promedios y renderizar
+        Object.keys(aulasGroups).sort((a, b) => a - b).forEach(aulaId => {
+            const votes = aulasGroups[aulaId];
+            const avg = (votes.reduce((a, b) => a + b, 0) / votes.length).toFixed(2);
+            
+            const div = document.createElement('div');
+            div.className = 'bg-gray-50 p-3 rounded border text-center';
+            div.innerHTML = `
+                <div class="text-xs text-gray-500 uppercase font-bold mb-1">Aula ${aulaId}</div>
+                <div class="text-2xl font-bold ${getColorForValue(avg)}">${avg}</div>
+                <div class="text-xs text-gray-400">${votes.length} votos</div>
+            `;
+            aulasAvgContainer.appendChild(div);
+        });
+    } else {
+        aulasAvgContainer.innerHTML = '<p class="text-gray-400 text-sm col-span-full">No hay datos suficientes.</p>';
     }
 
     // 2. Actualizar Gráfico Distribución
@@ -350,5 +373,83 @@ async function toggleAula(id, isActive) {
         console.error('Error actualizando aula:', error);
         alert('Error al actualizar estado del aula.');
         loadAulasConfig(); // Revert UI
+    }
+}
+
+// --- Exportación CSV ---
+
+async function downloadVotesCSV() {
+    // Descargar TODOS los votos (sin límite de 100)
+    const { data, error } = await supabaseClient
+        .from('feedback')
+        .select('created_at, aula_id, voto, session_id, user_id')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        alert('Error descargando datos: ' + error.message);
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        alert('No hay datos para exportar.');
+        return;
+    }
+
+    // Convertir a CSV
+    const headers = ['Timestamp', 'Aula ID', 'Voto', 'Session ID', 'User ID'];
+    const csvContent = [
+        headers.join(','),
+        ...data.map(row => [
+            new Date(row.created_at).toISOString(),
+            row.aula_id,
+            row.voto,
+            row.session_id || '',
+            row.user_id || ''
+        ].join(','))
+    ].join('\n');
+
+    downloadFile(csvContent, `votos_confort_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+async function downloadPointsCSV() {
+    const { data, error } = await supabaseClient
+        .from('perfiles')
+        .select('email, puntos')
+        .order('puntos', { ascending: false });
+
+    if (error) {
+        alert('Error descargando datos: ' + error.message);
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        alert('No hay datos para exportar.');
+        return;
+    }
+
+    // Convertir a CSV
+    const headers = ['Email', 'Puntos Totales'];
+    const csvContent = [
+        headers.join(','),
+        ...data.map(row => [
+            row.email,
+            row.puntos
+        ].join(','))
+    ].join('\n');
+
+    downloadFile(csvContent, `puntos_usuarios_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+function downloadFile(content, fileName) {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 }
