@@ -58,6 +58,18 @@ El sistema abarca:
     *   **Hosting:** Netlify (Archivos estáticos).
     *   **Servidor de Correo:** Gmail SMTP (vía Google App Passwords).
 
+### 2.2. Direcciones de Acceso
+El sistema se encuentra desplegado y accesible en las siguientes direcciones:
+
+*   **App de Votación (Principal - Netlify):** `https://control-termico.netlify.app`
+*   **App de Votación (Alternativa - Vercel):** `https://confort-termico.vercel.app`
+*   **Panel de Administración:** `https://control-termico.netlify.app/admin.html`
+*   **Acceso Directo a Aulas (Ejemplos):**
+    *   Aula 1: `https://control-termico.netlify.app/?aula=1`
+    *   Aula 2: `https://control-termico.netlify.app/?aula=2`
+    *   ...
+    *   Aula 50: `https://control-termico.netlify.app/?aula=50`
+
 ---
 
 2.  La aplicación valida la ubicación (Aula) y la sesión.
