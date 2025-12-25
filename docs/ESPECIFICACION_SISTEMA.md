@@ -122,7 +122,9 @@ El sistema abarca:
 *   **Funcionalidades:**
     *   **Configuración:**
         *   Ajuste del intervalo mínimo entre votos (5-15 min).
+        *   Selección del número de opciones de voto (3 o 5).
         *   Gestión de aulas (Activar/Desactivar).
+        *   **Personalización de Opciones de Voto:** Configuración de iconos, etiquetas y colores para los valores de voto.
     *   **Exportación de Datos:**
         *   Descarga de CSV de Votos (incluye Email de usuario).
         *   Descarga de CSV de Puntos de usuarios.
@@ -220,14 +222,16 @@ Para evitar límites de envío, se utiliza un servidor SMTP personalizado:
 
 ### 7.3. Despliegue
 *   El código fuente se aloja en GitHub.
-*   Netlify detecta cambios en la rama `main` y despliega automáticamente.
-*   Archivo `netlify.toml` configura las redirecciones para SPA (Single Page Application).
+*   **Netlify:** Detecta cambios en la rama `main` y despliega automáticamente. Archivo `netlify.toml` configura las redirecciones.
+*   **Vercel:** Alternativa de despliegue configurada para integración continua desde el repositorio.
 
 ---
 
 ## 8. Accesos y Credenciales
 
-*   **Panel de Administración (Dashboard):** [https://control-termico.netlify.app/admin.html](https://control-termico.netlify.app/admin.html)
+*   **Panel de Administración (Dashboard):** 
+    *   Netlify: [https://control-termico.netlify.app/admin.html](https://control-termico.netlify.app/admin.html)
+    *   Vercel: [https://confort-termico.vercel.app/admin.html](https://confort-termico.vercel.app/admin.html)
 
 ### 8.2. Credenciales de Administración
 *   **Contraseña de acceso al Dashboard:** `admin1234`
