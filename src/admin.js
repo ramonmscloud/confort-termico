@@ -48,7 +48,8 @@ function checkAdminPassword() {
     }
 }
 
-functioPreparar etiquetas y colores basados en voteOptions
+function initCharts() {
+    // Preparar etiquetas y colores basados en voteOptions
     const labels = [-2, -1, 0, 1, 2].map(v => voteOptions[v]?.label || v);
     const bgColors = [-2, -1, 0, 1, 2].map(v => getTailwindColorHex(voteOptions[v]?.color || 'bg-gray-500'));
 
