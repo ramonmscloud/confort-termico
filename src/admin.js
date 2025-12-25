@@ -437,27 +437,49 @@ function getColorForAula(id) {
 // --- Configuración ---
 
 async function loadConfig() {
-    const { data, error } = await supabaseClient
+    // Cargar intervalo
+    const { data: intervalData } = await supabaseClient
         .from('config')
         .select('value')
         .eq('key', 'min_vote_interval_minutes')
         .single();
 
-    if (data) {
-        document.getElementById('config-interval').value = data.value;
+    if (intervalData) {
+        document.getElementById('config-interval').value = intervalData.value;
+    }
+
+    // Cargar conteo de opciones
+    const { data: countData } = await supabaseClient
+        .from('config')
+        .select('value')
+        .eq('key', 'vote_options_count')
+        .single();
+
+    if (countData) {
+        document.getElementById('config-vote-count').value = countData.value;
+    } else {
+        // Default a 5 si no existe
+        document.getElementById('config-vote-count').value = "5";
     }
 }
 
 async function saveConfig() {
-    const val = document.getElementById('config-interval').value;
-    if (val < 5 || val > 15) {
+    const intervalVal = document.getElementById('config-interval').value;
+    const countVal = document.getElementById('config-vote-count').value;
+
+    if (intervalVal < 5 || intervalVal > 15) {
         alert('El intervalo debe estar entre 5 y 15 minutos.');
         return;
     }
 
+    const updates = [
+        { key: 'min_vote_interval_minutes', value: intervalVal },
+        { key: 'vote_options_count', value: countVal }
+    ];
+
     const { error } = await supabaseClient
         .from('config')
-        .upsert({ key: 'min_vote_interval_minutes', value: val });
+        .upsert(updates);
 
     if (error) {
         console.error('Error guardando config:', error);

@@ -47,6 +47,19 @@ window.addEventListener('load', async () => {
     loadVoteOptions();
 });
 async function loadVoteOptions() {
+    // 1. Cargar configuración de conteo
+    let optionsCount = 5; // Default
+    const { data: configData } = await supabaseClient
+        .from('config')
+        .select('value')
+        .eq('key', 'vote_options_count')
+        .single();
+    
+    if (configData) {
+        optionsCount = parseInt(configData.value);
+    }
+
+    // 2. Cargar opciones
     const { data, error } = await supabaseClient
         .from('vote_options')
         .select('*')
@@ -66,10 +79,17 @@ async function loadVoteOptions() {
         options = data;
     }
 
+    // 3. Filtrar opciones según configuración
+    let filteredOptions = options;
+    if (optionsCount === 3) {
+        // Solo -1, 0, 1
+        filteredOptions = options.filter(o => o.value >= -1 && o.value <= 1);
+    }
+
     const container = document.getElementById('voting-interface');
     container.innerHTML = '';
 
-    options.forEach(opt => {
+    filteredOptions.forEach(opt => {
         const btn = document.createElement('button');
         btn.onclick = () => votar(opt.value);
         

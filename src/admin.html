@@ -47,11 +47,19 @@
                 <!-- Vote Interval -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo mínimo entre votos (minutos)</label>
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-4 mb-4">
                         <input type="number" id="config-interval" min="5" max="15" class="p-2 border rounded w-24" value="5">
-                        <button onclick="saveConfig()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Guardar</button>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Debe ser entre 5 y 15 minutos.</p>
+                    
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de Opciones de Voto</label>
+                    <div class="flex items-center gap-4">
+                        <select id="config-vote-count" class="p-2 border rounded w-full max-w-xs">
+                            <option value="3">3 Opciones (Frío, Bien, Calor)</option>
+                            <option value="5">5 Opciones (Muy Frío ... Muy Calor)</option>
+                        </select>
+                        <button onclick="saveConfig()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 whitespace-nowrap">Guardar Config</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Intervalo: 5-15 min. Opciones: 3 o 5 botones.</p>
                 </div>
 
                 <!-- Aulas Management -->
