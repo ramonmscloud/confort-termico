@@ -62,6 +62,27 @@
                         <p class="text-gray-400 text-sm">Cargando aulas...</p>
                     </div>
                 </div>
+
+                <!-- Vote Options Management -->
+                <div class="col-span-1 md:col-span-2 mt-6 border-t pt-6">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Personalización de Opciones de Voto</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border rounded">
+                            <thead>
+                                <tr class="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th class="p-3">Valor</th>
+                                    <th class="p-3">Icono</th>
+                                    <th class="p-3">Etiqueta</th>
+                                    <th class="p-3">Color (Tailwind)</th>
+                                    <th class="p-3">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vote-options-list">
+                                <!-- Injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -76,7 +97,15 @@
                 <div class="flex flex-col gap-2 mt-2">
                     <button onclick="downloadVotesCSV()" class="bg-green-600 text-white text-sm py-2 px-4 rounded hover:bg-green-700 transition flex items-center justify-center gap-2">
                         📄 Descargar Votos (CSV)
-                    </button>
+             Distribución por Aula -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h3 class="text-lg font-bold mb-4 text-gray-700">Distribución de Sensación Térmica por Aula</h3>
+            <div class="h-80">
+                <canvas id="aulasDistributionChart"></canvas>
+            </div>
+        </div>
+
+        <!--        </button>
                     <button onclick="downloadPointsCSV()" class="bg-blue-600 text-white text-sm py-2 px-4 rounded hover:bg-blue-700 transition flex items-center justify-center gap-2">
                         🏆 Descargar Puntos (CSV)
                     </button>

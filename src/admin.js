@@ -7,9 +7,13 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 // Variables de Gráficos
 let distributionChart;
 let timelineChart;
+let aulasDistributionChart;
+let voteOptions = {}; // Cache de opciones de voto
 
 // Inicialización
 window.addEventListener('load', async () => {
+    // Cargar opciones de voto primero para configurar gráficos correctamente
+    await loadVoteOptionsData();
     initCharts();
     // Los datos se cargarán solo tras poner la contraseña
 });
@@ -33,6 +37,7 @@ function checkAdminPassword() {
         loadLeaderboard();
         loadConfig();
         loadAulasConfig();
+        renderVoteOptionsConfig(); // Renderizar tabla de configuración
         subscribeToRealtime();
     } else {
         // Contraseña incorrecta
@@ -43,36 +48,46 @@ function checkAdminPassword() {
     }
 }
 
-function initCharts() {
+functioPreparar etiquetas y colores basados en voteOptions
+    const labels = [-2, -1, 0, 1, 2].map(v => voteOptions[v]?.label || v);
+    const bgColors = [-2, -1, 0, 1, 2].map(v => getTailwindColorHex(voteOptions[v]?.color || 'bg-gray-500'));
+
     // Gráfico de Distribución (Pie/Bar)
     const ctxDist = document.getElementById('distributionChart').getContext('2d');
     distributionChart = new Chart(ctxDist, {
         type: 'bar',
         data: {
-            labels: ['Muy Frío (-2)', 'Fresco (-1)', 'Bien (0)', 'Calor (1)', 'Muy Calor (2)'],
+            labels: labels,
             datasets: [{
                 label: 'Votos',
                 data: [0, 0, 0, 0, 0],
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.6)', // Azul
-                    'rgba(147, 197, 253, 0.6)', // Azul claro
-                    'rgba(34, 197, 94, 0.6)',  // Verde
-                    'rgba(251, 146, 60, 0.6)', // Naranja
-                    'rgba(239, 68, 68, 0.6)'   // Rojo
-                ],
-                borderColor: [
-                    'rgb(59, 130, 246)',
-                    'rgb(147, 197, 253)',
-                    'rgb(34, 197, 94)',
-                    'rgb(251, 146, 60)',
-                    'rgb(239, 68, 68)'
-                ],
+                backgroundColor: bgColors,
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
             scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+
+    // Gráfico de Distribución por Aulas (Stacked Bar)
+    const ctxAulas = document.getElementById('aulasDistributionChart').getContext('2d');
+    aulasDistributionChart = new Chart(ctxAulas, {
+        type: 'bar',
+        data: {
+            labels: [], // Nombres de aulas
+            datasets: [] // Datasets dinámicos por tipo de voto
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
+            },
+            plugins: {
+                legend: { position: 'top' }
+            }
         }
     });
 
@@ -103,6 +118,25 @@ function initCharts() {
     });
 }
 
+// Helper para convertir clases tailwind a hex (aproximado para Chart.js)
+function getTailwindColorHex(className) {
+    const map = {
+        'bg-blue-500': 'rgba(59, 130, 246, 0.8)',
+        'bg-blue-300': 'rgba(147, 197, 253, 0.8)',
+        'bg-green-500': 'rgba(34, 197, 94, 0.8)',
+        'bg-orange-500': 'rgba(249, 115, 22, 0.8)',
+        'bg-red-500': 'rgba(239, 68, 68, 0.8)',
+        // Fallbacks
+        'bg-blue-600': 'rgba(37, 99, 235, 0.8)',
+        'bg-red-600': 'rgba(220, 38, 38, 0.8)',
+        'bg-green-600': 'rgba(22, 163, 74, 0.8)',
+        'bg-yellow-500': 'rgba(234, 179, 8, 0.8)',
+        'bg-purple-500': 'rgba(168, 85, 247, 0.8)'
+    };
+    return map[className] || 'rgba(156, 163, 175, 0.8)'; // Gray default }
+    });
+}
+
 async function loadInitialData() {
     // Obtener todos los votos (Limitado a últimos 100 para demo)
     const { data, error } = await supabaseClient
@@ -129,10 +163,18 @@ function updateDashboard(data) {
     const aulasAvgContainer = document.getElementById('aulas-avg-container');
     aulasAvgContainer.innerHTML = '';
 
+    // Estructuras para gráficos
+    const aulasGroups = {};
+    const counts = [0, 0, 0, 0, 0]; // -2, -1, 0, 1, 2
+
     if (data.length > 0) {
-        // Agrupar por aula
-        const aulasGroups = {};
+        // Agrupar por aula y contar globales
         data.forEach(d => {
+            // Global counts
+            const index = d.voto + 2; // Map -2..2 to 0..4
+            if (index >= 0 && index <= 4) counts[index]++;
+
+            // Aula groups
             if (!aulasGroups[d.aula_id]) aulasGroups[d.aula_id] = [];
             aulasGroups[d.aula_id].push(d.voto);
         });
@@ -155,16 +197,14 @@ function updateDashboard(data) {
         aulasAvgContainer.innerHTML = '<p class="text-gray-400 text-sm col-span-full">No hay datos suficientes.</p>';
     }
 
-    // 2. Actualizar Gráfico Distribución
-    const counts = [0, 0, 0, 0, 0]; // -2, -1, 0, 1, 2
-    data.forEach(d => {
-        const index = d.voto + 2; // Map -2..2 to 0..4
-        if (index >= 0 && index <= 4) counts[index]++;
-    });
+    // 2. Actualizar Gráfico Distribución Global
     distributionChart.data.datasets[0].data = counts;
     distributionChart.update();
 
-    // 3. Actualizar Gráfico Temporal (Por Aula)
+    // 3. Actualizar Gráfico Distribución por Aulas
+    updateAulasDistributionChart(aulasGroups);
+
+    // 4. Actualizar Gráfico Temporal (Por Aula)
     const timelineData = [...data].reverse(); // Usar todos los datos cargados (100) para tener mejor histórico
     
     // Agrupar por Aula
@@ -193,13 +233,12 @@ function updateDashboard(data) {
         };
     });
 
-    // Usamos un set de todas las etiquetas de tiempo para el eje X (opcional, Chart.js lo maneja bien si pasamos objetos x/y pero en line chart espera labels comunes a veces)
-    // Para simplificar en este gráfico básico, usaremos las etiquetas de TODOS los puntos ordenados
+    // Usamos un set de todas las etiquetas de tiempo para el eje X
     timelineChart.data.labels = timelineData.map(d => new Date(d.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
     timelineChart.data.datasets = datasets;
     timelineChart.update();
 
-    // 4. Actualizar Tabla
+    // 5. Actualizar Tabla
     const tbody = document.getElementById('feed-body');
     tbody.innerHTML = '';
     data.slice(0, 10).forEach(d => { // Mostrar últimos 10
@@ -213,6 +252,106 @@ function updateDashboard(data) {
         `;
         tbody.innerHTML += row;
     });
+}
+
+function updateAulasDistributionChart(aulasGroups) {
+    const aulaIds = Object.keys(aulasGroups).sort((a, b) => a - b);
+    
+    // Preparar datasets para cada tipo de voto (-2 a 2)
+    const datasets = [-2, -1, 0, 1, 2].map(voteVal => {
+        return {
+            label: voteOptions[voteVal]?.label || voteVal,
+            data: aulaIds.map(id => {
+                // Contar cuantos votos de este tipo hay en esta aula
+                return aulasGroups[id].filter(v => v === voteVal).length;
+            }),
+            backgroundColor: getTailwindColorHex(voteOptions[voteVal]?.color || 'bg-gray-500')
+        };
+    });
+
+    aulasDistributionChart.data.labels = aulaIds.map(id => `Aula ${id}`);
+    aulasDistributionChart.data.datasets = datasets;
+    aulasDistributionChart.update();
+}
+
+// --- Gestión de Opciones de Voto ---
+
+async function loadVoteOptionsData() {
+    const { data, error } = await supabaseClient
+        .from('vote_options')
+        .select('*')
+        .order('value');
+
+    if (error || !data || data.length === 0) {
+        console.warn('Usando opciones por defecto (tabla vacía o error)');
+        // Defaults
+        voteOptions = {
+            '-2': { value: -2, label: 'Muy Frío', icon: '🥶', color: 'bg-blue-500' },
+            '-1': { value: -1, label: 'Fresco', icon: '❄️', color: 'bg-blue-300' },
+            '0': { value: 0, label: 'Bien', icon: '😊', color: 'bg-green-500' },
+            '1': { value: 1, label: 'Calor', icon: '🔥', color: 'bg-orange-500' },
+            '2': { value: 2, label: 'Muy Calor', icon: '🥵', color: 'bg-red-500' }
+        };
+    } else {
+        voteOptions = {};
+        data.forEach(opt => {
+            voteOptions[opt.value] = opt;
+        });
+    }
+}
+
+function renderVoteOptionsConfig() {
+    const tbody = document.getElementById('vote-options-list');
+    tbody.innerHTML = '';
+
+    [-2, -1, 0, 1, 2].forEach(val => {
+        const opt = voteOptions[val] || { value: val, label: '', icon: '', color: '' };
+        const row = document.createElement('tr');
+        row.className = 'border-b hover:bg-gray-50';
+        row.innerHTML = `
+            <td class="p-3 text-gray-700 font-bold">${val}</td>
+            <td class="p-3"><input type="text" id="opt-icon-${val}" value="${opt.icon}" class="w-12 p-1 border rounded text-center text-xl"></td>
+            <td class="p-3"><input type="text" id="opt-label-${val}" value="${opt.label}" class="w-full p-1 border rounded"></td>
+            <td class="p-3">
+                <select id="opt-color-${val}" class="p-1 border rounded w-full">
+                    <option value="bg-blue-500" ${opt.color === 'bg-blue-500' ? 'selected' : ''}>Azul (Muy Frío)</option>
+                    <option value="bg-blue-300" ${opt.color === 'bg-blue-300' ? 'selected' : ''}>Azul Claro (Fresco)</option>
+                    <option value="bg-green-500" ${opt.color === 'bg-green-500' ? 'selected' : ''}>Verde (Bien)</option>
+                    <option value="bg-orange-500" ${opt.color === 'bg-orange-500' ? 'selected' : ''}>Naranja (Calor)</option>
+                    <option value="bg-red-500" ${opt.color === 'bg-red-500' ? 'selected' : ''}>Rojo (Muy Calor)</option>
+                    <option value="bg-purple-500" ${opt.color === 'bg-purple-500' ? 'selected' : ''}>Morado</option>
+                    <option value="bg-yellow-500" ${opt.color === 'bg-yellow-500' ? 'selected' : ''}>Amarillo</option>
+                </select>
+            </td>
+            <td class="p-3">
+                <button onclick="saveVoteOption(${val})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Guardar</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+async function saveVoteOption(value) {
+    const label = document.getElementById(`opt-label-${value}`).value;
+    const icon = document.getElementById(`opt-icon-${value}`).value;
+    const color = document.getElementById(`opt-color-${value}`).value;
+
+    const { error } = await supabaseClient
+        .from('vote_options')
+        .upsert({ value, label, icon, color });
+
+    if (error) {
+        console.error('Error guardando opción:', error);
+        alert('Error al guardar opción.');
+    } else {
+        // Actualizar cache local
+        voteOptions[value] = { value, label, icon, color };
+        alert('Opción actualizada. Recarga la página de votación para ver cambios.');
+        
+        // Actualizar gráficos
+        initCharts(); // Re-init para actualizar labels/colores
+        loadInitialData(); // Recargar datos
+    }
 }
 
 async function loadLeaderboard() {
@@ -275,12 +414,7 @@ function getColorForValue(val) {
 }
 
 function getLabelForValue(val) {
-    if (val === -2) return 'Muy Frío';
-    if (val === -1) return 'Fresco';
-    if (val === 0) return 'Bien';
-    if (val === 1) return 'Calor';
-    if (val === 2) return 'Muy Calor';
-    return val;
+    return voteOptions[val]?.label || val;
 }
 
 function getColorForAula(id) {

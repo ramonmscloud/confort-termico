@@ -42,7 +42,56 @@ window.addEventListener('load', async () => {
         if (session) handleUserLogin(session.user);
         else handleUserLogout();
     });
+
+    // 3. Cargar opciones de voto
+    loadVoteOptions();
 });
+async function loadVoteOptions() {
+    const { data, error } = await supabaseClient
+        .from('vote_options')
+        .select('*')
+        .order('value');
+
+    let options = [];
+    if (error || !data || data.length === 0) {
+        // Fallback defaults
+        options = [
+            { value: -2, label: 'Muy Frío', icon: '🥶', color: 'bg-blue-500' },
+            { value: -1, label: 'Fresco', icon: '❄️', color: 'bg-blue-300' },
+            { value: 0, label: 'Bien', icon: '😊', color: 'bg-green-500' },
+            { value: 1, label: 'Calor', icon: '🔥', color: 'bg-orange-500' },
+            { value: 2, label: 'Muy Calor', icon: '🥵', color: 'bg-red-500' }
+        ];
+    } else {
+        options = data;
+    }
+
+    const container = document.getElementById('voting-interface');
+    container.innerHTML = '';
+
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.onclick = () => votar(opt.value);
+        
+        // Determinar color de texto basado en la configuración
+        let colorClass = 'text-gray-700';
+        if (opt.color.includes('blue')) colorClass = 'text-blue-600';
+        else if (opt.color.includes('green')) colorClass = 'text-green-600';
+        else if (opt.color.includes('orange')) colorClass = 'text-orange-500';
+        else if (opt.color.includes('red')) colorClass = 'text-red-600';
+        else if (opt.color.includes('yellow')) colorClass = 'text-yellow-600';
+        else if (opt.color.includes('purple')) colorClass = 'text-purple-600';
+
+        btn.className = `flex flex-col items-center p-2 hover:bg-gray-50 rounded transition border-b-2 border-transparent hover:border-current ${colorClass}`;
+
+        btn.innerHTML = `
+            <span class="text-3xl">${opt.icon}</span>
+            <span class="text-xs mt-1 font-medium">${opt.label}</span>
+        `;
+        container.appendChild(btn);
+    });
+}
+
 
 // --- GESTIÓN DE AULA ---
 
