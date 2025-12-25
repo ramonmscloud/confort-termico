@@ -97,15 +97,7 @@
                 <div class="flex flex-col gap-2 mt-2">
                     <button onclick="downloadVotesCSV()" class="bg-green-600 text-white text-sm py-2 px-4 rounded hover:bg-green-700 transition flex items-center justify-center gap-2">
                         📄 Descargar Votos (CSV)
-             Distribución por Aula -->
-        <div class="bg-white p-6 rounded-lg shadow mb-8">
-            <h3 class="text-lg font-bold mb-4 text-gray-700">Distribución de Sensación Térmica por Aula</h3>
-            <div class="h-80">
-                <canvas id="aulasDistributionChart"></canvas>
-            </div>
-        </div>
-
-        <!--        </button>
+                    </button>
                     <button onclick="downloadPointsCSV()" class="bg-blue-600 text-white text-sm py-2 px-4 rounded hover:bg-blue-700 transition flex items-center justify-center gap-2">
                         🏆 Descargar Puntos (CSV)
                     </button>
@@ -114,6 +106,14 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-gray-500 text-sm uppercase">Última Actualización</h3>
                 <p class="text-sm font-mono text-gray-600 mt-2" id="last-update">Esperando datos...</p>
+            </div>
+        </div>
+
+        <!-- Distribución por Aula -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h3 class="text-lg font-bold mb-4 text-gray-700">Distribución de Sensación Térmica por Aula</h3>
+            <div class="h-80">
+                <canvas id="aulasDistributionChart"></canvas>
             </div>
         </div>
 
