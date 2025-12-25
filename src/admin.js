@@ -134,8 +134,7 @@ function getTailwindColorHex(className) {
         'bg-yellow-500': 'rgba(234, 179, 8, 0.8)',
         'bg-purple-500': 'rgba(168, 85, 247, 0.8)'
     };
-    return map[className] || 'rgba(156, 163, 175, 0.8)'; // Gray default }
-    });
+    return map[className] || 'rgba(156, 163, 175, 0.8)'; // Gray default
 }
 
 async function loadInitialData() {
